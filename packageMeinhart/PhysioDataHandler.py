@@ -348,7 +348,8 @@ def add_noise_to_signal(signal_data, target_snr_db=20, signals=['Acc','Gyr'], si
         
         for ii in range(len(signal_orientations)):
             
-            P_signal_watts = signal_data[sig][:,ii] ** 2 # get power of the signal [watts]
+            # get power of the signal [watts] (with removed offset)
+            P_signal_watts = (signal_data[sig][:,ii]-np.mean(signal_data[sig][:,ii])) ** 2
             P_signal_mean_watts = np.mean(P_signal_watts) # get mean
             P_signal_mean_db = 10 * np.log10(P_signal_mean_watts) # convert to db
             
@@ -409,12 +410,18 @@ def generate_section_features_from_separate_repetitions(data_points_df,
     signal_abbrs : list of strings
         Abbreviations of the signals (e.g. ['Acc','Gyr']).
     
-    rot_axis : int
+    rot_axis : int or list of int
         Axis for rotation:
         0, 1 or 2 --> x, y or z
+        --> if list: sequence of rotations
+        (Length of list has to match with the length of rot_angle,
+        otherwise the shorter list of the two is taken and all other values are omitted.)
         
-    rot_angle : int or float
+    rot_angle : int or float or list of int or float
         Rotation angle in degree.
+        --> if list: sequence of rotations
+        (Length of list has to match with the length of rot_axis,
+        otherwise the shorter list of the two is taken and all other values are omitted.)
         
     add_noise : boolean
         If True --> noise is added to signals.
@@ -508,12 +515,19 @@ def generate_section_features_from_separate_repetitions(data_points_df,
         for sig in signal_abbrs:
             selected_data[sig] = selected_data_df.filter(regex=sig+'*').values
             
-        # rotate the signals if rotation angle > 0
-        if rot_angle > 0:
-            selected_data = rotate_signal(selected_data, 
-                                          axis=rot_axis, 
-                                          rot_angle=rot_angle, 
-                                          signals=signal_abbrs)
+        # rotate the signals
+        if not isinstance(rot_axis, list): # if not list --> make list
+            rot_axis = [rot_axis]
+        if not isinstance(rot_angle, list): # if not list --> make list
+            rot_angle = [rot_angle]
+        # going through all rotation axes and rotation angles
+        for current_rot_axis, current_rot_angle in zip(rot_axis, rot_angle):
+            # apply rotation only if rotation angle is not zero
+            if current_rot_angle != 0:
+                selected_data = rotate_signal(selected_data, 
+                                              axis=current_rot_axis, 
+                                              rot_angle=current_rot_angle, 
+                                              signals=signal_abbrs)
             
         # add noise to signal if corresponding parameter is True
         if add_noise is True:
@@ -599,12 +613,18 @@ class PhysioData_SectionFeatures():
     with_non_Ex : boolean
         If False --> omit non exercise data (data points with zero repetitions).
         
-    rot_axis_test_data : int
-        Axis for rotation:
+    rot_axis_test_data : int or list of int
+        Axis (axes) for rotation:
         0, 1 or 2 --> x, y or z
-    
-    rot_angle_test_data : int or float
-        Rotation angle in degree.
+        --> if list: sequence of rotations
+        (Length of list has to match with the length of rot_angle,
+        otherwise the shorter list of the two is taken and all other values are omitted.)
+        
+    rot_angle_test_data : int or float or list of int or float
+        Rotation angle(s) in degree.
+        --> if list: sequence of rotations
+        (Length of list has to match with the length of rot_axis,
+        otherwise the shorter list of the two is taken and all other values are omitted.)
     
     add_noise_test_data : boolean
         If True --> Additive White Gaussian Noise (AWGN) is added to signals of data for testing.
