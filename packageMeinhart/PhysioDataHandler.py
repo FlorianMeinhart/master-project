@@ -1934,7 +1934,7 @@ class PhysioData_WindowingProcedure():
         no returns
         '''
         
-        self.prob_matrix_dict = fill_prediction_matrix(pred_probs,
+        self.prob_matrix_dict = fill_prediction_matrix(pred_probabilities,
                                                        exercise_abbrs=self.exercise_abbrs,
                                                        num_start_points=self.num_start_points,
                                                        num_win_sizes=self.num_win_sizes,
