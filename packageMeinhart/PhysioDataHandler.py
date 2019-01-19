@@ -1460,6 +1460,7 @@ def evaluate_peaks(peak_ind,
     # if blocks are overlapping --> retain only the block with the highest predicted probabilities (sum)
     #    --> the more peaks in the block, the higher the sum of probabilities (in general)
     blocks_to_remove = []
+    
     # check all combinations of two exercises
     for ex1, ex2 in itertools.combinations(exercise_abbrs_peak_eval, 2):
         for ii in range(len(valid_rep_blocks[ex1])):
@@ -1474,11 +1475,11 @@ def evaluate_peaks(peak_ind,
                 or (start_2 >= start_1 and start_2 <= stop_1) or (stop_2 >= start_1 and stop_2 <= stop_1):
 
                     # selecet the corresponding probability values of prob_matrix and sum them up
-                    sum_prob_block_1 = prob_matrix[ex1][rep_blocks[ex1][ii][:,0], 
-                                                        rep_blocks[ex1][ii][:,1]].sum()
+                    sum_prob_block_1 = prob_matrix[ex1][valid_rep_blocks[ex1][ii][:,0], 
+                                                        valid_rep_blocks[ex1][ii][:,1]].sum()
 
-                    sum_prob_block_2 = prob_matrix[ex2][rep_blocks[ex2][jj][:,0], 
-                                                        rep_blocks[ex2][jj][:,1]].sum()
+                    sum_prob_block_2 = prob_matrix[ex2][valid_rep_blocks[ex2][jj][:,0], 
+                                                        valid_rep_blocks[ex2][jj][:,1]].sum()
 
                     # compare the sum of the probabilities of the two blocks
                     if sum_prob_block_1 < sum_prob_block_2:
