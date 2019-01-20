@@ -1969,25 +1969,29 @@ class PhysioData_WindowingProcedure():
                                             figsize=(18,9),
                                             cross_size=10,
                                             cross_width=1.5,
-                                            fontsize_title=20,
+                                            fontsize_title=24,
                                             yticks_step_in_s=2,
-                                            fontsize_yticks=7,
-                                            fontsize_ylabels_ex=13,
-                                            labelpad_ex=32,
-                                            fontsize_actual_classes=10,
-                                            fontsize_actual_classes_label=11,
+                                            fontsize_yticks=10,
+                                            fontsize_ylabels_ex=18,
+                                            labelpad_ex=50,
+                                            fontsize_actual_classes=12,
+                                            fontsize_actual_classes_label=14,
                                             labelpad_actual_classes=50,
-                                            fontsize_window_length=10,
-                                            xpos_window_length=0.1,
+                                            fontsize_window_length=16,
+                                            xpos_window_length=0.088,
                                             ypos_window_length=0.6,
-                                            fontsize_time_xlabel=13,
-                                            fontsize_time_xticks=11,
+                                            fontsize_time_xlabel=16,
+                                            fontsize_time_xticks=14,
+                                            fontsize_pred_prob=16,
+                                            xpos_pred_prob=0.91,
+                                            ypos_pred_prob=0.7,
                                             colorbar_position_x_y_length_heigth=[0.93, 0.255, 0.01, 0.625],
-                                            fontsize_colorbar_ticks=10,
+                                            fontsize_colorbar_ticks=14,
                                             interactive_plot=True,
                                             plot_time_range=False,
                                             start_time='00:00.0',
                                             stop_time='01:00.0',
+                                            time_offset_before_and_after=0,
                                             plot_actual_classes=True,
                                             timetable_file_dir = r'E:\Physio_Data\Exercise_time_tables',
                                             timetable_file_name = 'Timetable_subject01.txt',
@@ -2040,7 +2044,7 @@ class PhysioData_WindowingProcedure():
         # default settings for a smaller plot
         if default_settings_smaller_plot is True:
             figsize = (10, 10)
-            cross_size = 20
+            cross_size = 15
             cross_width = 3
             fontsize_title = 18
             yticks_step_in_s = 2
@@ -2055,7 +2059,10 @@ class PhysioData_WindowingProcedure():
             ypos_window_length = 0.6
             fontsize_time_xlabel = 14
             fontsize_time_xticks = 12
-            colorbar_position_x_y_length_heigth = [0.93, 0.175, 0.01, 0.705]
+            fontsize_pred_prob = 14
+            xpos_pred_prob = 0.915
+            ypos_pred_prob = 0.62
+            colorbar_position_x_y_length_heigth = [0.945, 0.175, 0.01, 0.705]
             fontsize_colorbar_ticks = 12
             interactive_plot = False
 
@@ -2067,7 +2074,7 @@ class PhysioData_WindowingProcedure():
         yticks = np.arange(0, self.win_max_len-self.win_min_len+self.win_stretch_inc, yticks_step_in_s) / self.win_stretch_inc
         ylabels = ['{}'.format(yticks[ii] * self.win_stretch_inc + self.win_min_len) for ii in range(len(yticks))]
 
-        # plot one axis less if plot_actual_classes is False      
+        # plot one axis less if plot_actual_classes is False
         if plot_actual_classes is False:
             self.fig, self.axis = plt.subplots(len(self.exercise_abbrs),1,figsize=figsize, sharex=True)
         else:
@@ -2105,7 +2112,8 @@ class PhysioData_WindowingProcedure():
             self.Button_showCross = Button(self.Button_showCross_ax, 'Show rep.')
             self.Button_showCross.on_clicked(self.toggle_cross)
 
-        self.fig.text(xpos_window_length, ypos_window_length, r'window length $[s]$', fontsize=fontsize_window_length, rotation=90)
+        self.fig.text(xpos_window_length, ypos_window_length, r'window length $[s]$',
+                      fontsize=fontsize_window_length, rotation=90)
 
         # time axis
         formatter = FuncFormatter(lambda i, x: time.strftime('%M:%S', time.gmtime(i*self.win_start_inc+self.win_start)))
@@ -2121,7 +2129,10 @@ class PhysioData_WindowingProcedure():
         # color bar
         self.cbar_ax = self.fig.add_axes(colorbar_position_x_y_length_heigth)
         self.cbar = self.fig.colorbar(s, cax=self.cbar_ax)
-        self.cbar.ax.tick_params(labelsize=fontsize_colorbar_ticks)
+        self.cbar.ax.set_yticklabels(['{}'.format(x) for x in [0,20,40,60,80,100]],
+                                     fontsize=fontsize_colorbar_ticks)
+        self.fig.text(xpos_pred_prob, ypos_pred_prob, r'predicted probability [%]',
+                      fontsize=fontsize_pred_prob, rotation=90)
 
         if interactive_plot is True:
             # add slider for selections on the x axis
@@ -2151,6 +2162,11 @@ class PhysioData_WindowingProcedure():
                                 - self.win_start/self.win_start_inc
             self.stop_index  = convert_time_format(stop_time, sampling_rate=1 / self.win_start_inc) \
                                 - self.win_start / self.win_start_inc
+
+            # considering the time offset before and after --> convert seconds to indices
+            time_offset_before_and_after_ind = time_offset_before_and_after / self.win_start_inc
+            self.start_index -= time_offset_before_and_after_ind # subtract the offset from start index
+            self.stop_index  += time_offset_before_and_after_ind # add the offset to stop index
 
         self.fig.suptitle(self.title_text + '\n' + indices_to_time(
                 self.start_index + round(self.win_start/self.win_start_inc),  
