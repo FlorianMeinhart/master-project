@@ -1961,9 +1961,23 @@ class PhysioData_WindowingProcedure():
         
         
     def plot_probability_matrices_and_peaks(self,
-                                            test_subject_id=None,
+                                            title_text='Predicted Probabilites',
                                             figsize=(18,9),
                                             cross_size=10,
+                                            fontsize_title=20,
+                                            yticks_step_in_s=2,
+                                            fontsize_yticks=7,
+                                            fontsize_ylabels_ex=13,
+                                            labelpad_ex=32,
+                                            fontsize_actual_classes_label=11,
+                                            labelpad_actual_classes=50,
+                                            fontsize_window_length=10,
+                                            xpos_window_length=0.1,
+                                            ypos_window_length=0.6,
+                                            fontsize_time_xlabel=13,
+                                            colorbar_position_x_y_length_heigth=[0.93, 0.255, 0.01, 0.625],
+                                            fontsize_colorbar_ticks=10,
+                                            interactive_plot=True,
                                             plot_actual_classes=True,
                                             timetable_file_dir = r'E:\Physio_Data\Exercise_time_tables',
                                             timetable_file_name = 'Timetable_subject01.txt',
@@ -1984,14 +1998,17 @@ class PhysioData_WindowingProcedure():
 
         Parameters
         ----------
-        test_subject_id : int or None
-            Just for the title of the plot, not necessary.
+        title_text : int or None
+            Title of the plot.
         
         figsize : tuple
             Figure size of the plot (e.g. (18,9)).
             
         cross_size : int
             Size of the green crosses, indicating the individual repetitions.
+
+        fontsize_ ... : int or float
+            Fontsize of the corresponding text or label for plotting.
             
         plot_actual_classes : boolean
             If True --> show a separate axis with the actual classes from a timetable.
@@ -2010,13 +2027,10 @@ class PhysioData_WindowingProcedure():
         no returns
         '''
         
-        # text for current subject
-        if isinstance(test_subject_id, int):
-            self.sub_text = 'Subject {}'.format(test_subject_id)
-        else:
-            self.sub_text = ''
+        # title of the plot
+        self.title_text = title_text
 
-        yticks = np.arange(0, self.win_max_len-self.win_min_len+self.win_stretch_inc, 2) / self.win_stretch_inc
+        yticks = np.arange(0, self.win_max_len-self.win_min_len+self.win_stretch_inc, yticks_step_in_s) / self.win_stretch_inc
         ylabels = ['{}'.format(yticks[ii] * self.win_stretch_inc + self.win_min_len) for ii in range(len(yticks))]
 
         # plot one axis less if plot_actual_classes is False      
@@ -2035,9 +2049,9 @@ class PhysioData_WindowingProcedure():
                           aspect='auto', cmap=cmap, vmin=vmin, vmax=vmax)
             ax.invert_yaxis()
             ax.set_yticks(yticks)
-            ax.set_yticklabels(ylabels, fontsize=7)
-            ax.set_ylabel(ex, rotation=0, fontsize=13)
-            ax.yaxis.labelpad = 32
+            ax.set_yticklabels(ylabels, fontsize=fontsize_yticks)
+            ax.set_ylabel(ex, rotation=0, fontsize=fontsize_ylabels_ex)
+            ax.yaxis.labelpad = labelpad_ex
             ax.xaxis.set_ticklabels([])
 
         # dictionary for cross plots (in order to toggle visibility)
@@ -2051,45 +2065,54 @@ class PhysioData_WindowingProcedure():
                 y_peak = np.array(self.rep_blocks[ex][ii])[:,1]
                 self.cross_plot[ex].append(ax.plot(x_peak, y_peak, '+g', markersize=cross_size, markeredgewidth=1.5))
 
-        self.Button_showCross_ax = plt.axes([0.78, 0.12, 0.05, 0.03])
-        self.Button_showCross = Button(self.Button_showCross_ax, 'Show rep.')
-        self.Button_showCross.on_clicked(self.toggle_cross)
+        if interactive_plot is True:
+            self.Button_showCross_ax = plt.axes([0.78, 0.12, 0.05, 0.03])
+            self.Button_showCross = Button(self.Button_showCross_ax, 'Show rep.')
+            self.Button_showCross.on_clicked(self.toggle_cross)
 
-        self.fig.text(0.1, 0.6, r'window length $[s]$', fontsize=10, rotation=90)
+        self.fig.text(xpos_window_length, ypos_window_length, r'window length $[s]$', fontsize=fontsize_window_length, rotation=90)
 
+        # time axis
         formatter = FuncFormatter(lambda i, x: time.strftime('%M:%S', time.gmtime(i*self.win_start_inc+self.win_start)))
         self.axis[-1].xaxis.set_major_formatter(formatter)
-        self.axis[-1].set_xlabel(r'time $[min:sec]$', fontsize=13)
+        self.axis[-1].set_xlabel(r'time $[min:sec]$', fontsize=fontsize_time_xlabel)
 
-        self.fig.subplots_adjust(bottom=0.2, right=0.9) # make space for buttons and color bar
-        self.cbar_ax = self.fig.add_axes([0.93, 0.255, 0.01, 0.625])
-        self.fig.colorbar(s, cax=self.cbar_ax)
+        if interactive_plot is True:
+            self.fig.subplots_adjust(bottom=0.2, right=0.9) # make space for buttons and color bar
+        else:
+            self.fig.subplots_adjust(right=0.9)  # make space only for color bar
 
-        # add slider for selections on the x axis
-        self.Slider_shiftX_ax = plt.axes([0.125, 0.07, 0.775, 0.025])
-        self.Slider_zoomX_ax = plt.axes([0.125, 0.035, 0.775, 0.025])
+        # color bar
+        self.cbar_ax = self.fig.add_axes(colorbar_position_x_y_length_heigth)
+        self.cbar = self.fig.colorbar(s, cax=self.cbar_ax)
+        self.cbar.ax.tick_params(labelsize=fontsize_colorbar_ticks)
 
-        axcolor = 'cornflowerblue'
-        self.Slider_shiftX = Slider(self.Slider_shiftX_ax, 'time shift [%]', 0.0, 100.0, valinit=0, facecolor=axcolor)
-        self.Slider_zoomX = Slider(self.Slider_zoomX_ax, 'time scale [%]', 0.1, 100.0, valinit=100, facecolor=axcolor)
-        self.Slider_zoomX_ax.xaxis.set_visible(True)
-        self.Slider_zoomX_ax.set_xticks(np.arange(0,105,5)) 
+        if interactive_plot is True:
+            # add slider for selections on the x axis
+            self.Slider_shiftX_ax = plt.axes([0.125, 0.07, 0.775, 0.025])
+            self.Slider_zoomX_ax = plt.axes([0.125, 0.035, 0.775, 0.025])
 
-        self.Slider_shiftX.on_changed(self.updateX)
-        self.Slider_zoomX.on_changed(self.updateX)
+            axcolor = 'cornflowerblue'
+            self.Slider_shiftX = Slider(self.Slider_shiftX_ax, 'time shift [%]', 0.0, 100.0, valinit=0, facecolor=axcolor)
+            self.Slider_zoomX = Slider(self.Slider_zoomX_ax, 'time scale [%]', 0.1, 100.0, valinit=100, facecolor=axcolor)
+            self.Slider_zoomX_ax.xaxis.set_visible(True)
+            self.Slider_zoomX_ax.set_xticks(np.arange(0,105,5))
 
-        # add button to reset view
-        self.Button_resetX_ax = plt.axes([0.85, 0.12, 0.05, 0.03])
-        self.Button_resetX = Button(self.Button_resetX_ax, 'Reset view')
-        self.Button_resetX.on_clicked(self.resetX)
+            self.Slider_shiftX.on_changed(self.updateX)
+            self.Slider_zoomX.on_changed(self.updateX)
+
+            # add button to reset view
+            self.Button_resetX_ax = plt.axes([0.85, 0.12, 0.05, 0.03])
+            self.Button_resetX = Button(self.Button_resetX_ax, 'Reset view')
+            self.Button_resetX.on_clicked(self.resetX)
 
         self.start_index = 0
         self.stop_index = self.num_start_points
 
-        self.fig.suptitle('Predicted Probabilities ' + self.sub_text + '\n' + indices_to_time(
+        self.fig.suptitle(self.title_text + '\n' + indices_to_time(
                 self.start_index + round(self.win_start/self.win_start_inc),  
                 self.stop_index + round(self.win_start/self.win_start_inc), 
-                self.win_start_inc), fontsize=20)
+                self.win_start_inc), fontsize=fontsize_title)
 
         self.axis[-1].set_xlim(0, self.num_start_points)
 
@@ -2130,8 +2153,8 @@ class PhysioData_WindowingProcedure():
                     self.axis[-1].text(x_center, 0.5, str(rep_num) + '\n' + exercise_timetable_names[ex_name], 
                                   horizontalalignment='center', verticalalignment='center', fontsize=10, clip_on=True)
 
-            self.axis[-1].set_ylabel('Actual classes', rotation=0, fontsize=11)
-            self.axis[-1].yaxis.labelpad = 50
+            self.axis[-1].set_ylabel('Actual classes', rotation=0, fontsize=fontsize_actual_classes_label)
+            self.axis[-1].yaxis.labelpad = labelpad_actual_classes
 
         plt.show()
     
@@ -2142,10 +2165,10 @@ class PhysioData_WindowingProcedure():
         self.start_index = int(self.Slider_shiftX.val / 100 * self.num_start_points)
         self.stop_index = self.start_index + self.Slider_zoomX.val / 100 * self.num_start_points
         self.axis[-1].set_xlim((self.start_index, self.stop_index))
-        self.fig.suptitle('Predicted Probabilities ' + self.sub_text + '\n' + indices_to_time(
+        self.fig.suptitle(self.title_text + '\n' + indices_to_time(
             self.start_index + round(self.win_start/self.win_start_inc),  
             self.stop_index + round(self.win_start/self.win_start_inc), 
-            self.win_start_inc), fontsize=20)
+            self.win_start_inc), fontsize=fontsize_title)
         plt.draw()
         
     def toggle_cross(self,val):
@@ -2161,10 +2184,10 @@ class PhysioData_WindowingProcedure():
         self.axis[-1].set_xlim((self.start_index, self.stop_index))
         self.Slider_shiftX.reset()
         self.Slider_zoomX.reset()
-        self.fig.suptitle('Predicted Probabilities ' + self.sub_text + '\n' + indices_to_time(
+        self.fig.suptitle(self.title_text + '\n' + indices_to_time(
             self.start_index + round(self.win_start/self.win_start_inc),  
             self.stop_index + round(self.win_start/self.win_start_inc), 
-            self.win_start_inc), fontsize=20)
+            self.win_start_inc), fontsize=fontsize_title)
         plt.draw()
 
 
