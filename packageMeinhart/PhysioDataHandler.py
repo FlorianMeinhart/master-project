@@ -1965,6 +1965,7 @@ class PhysioData_WindowingProcedure():
         
     def plot_probability_matrices_and_peaks(self,
                                             title_text='Predicted Probabilites',
+                                            default_settings_smaller_plot=False,
                                             figsize=(18,9),
                                             cross_size=10,
                                             cross_width=1.5,
@@ -2035,7 +2036,30 @@ class PhysioData_WindowingProcedure():
         -------
         no returns
         '''
-        
+
+        # default settings for a smaller plot
+        if default_settings_smaller_plot is True:
+            figsize = (10, 10)
+            cross_size = 20
+            cross_width = 3
+            fontsize_title = 18
+            yticks_step_in_s = 2
+            fontsize_yticks = 10
+            fontsize_ylabels_ex = 16
+            labelpad_ex = 45
+            fontsize_actual_classes = 12
+            fontsize_actual_classes_label = 14
+            labelpad_actual_classes = 45
+            fontsize_window_length = 14
+            xpos_window_length = 0.065
+            ypos_window_length = 0.6
+            fontsize_time_xlabel = 14
+            fontsize_time_xticks = 12
+            colorbar_position_x_y_length_heigth = [0.93, 0.175, 0.01, 0.705]
+            fontsize_colorbar_ticks = 12
+            interactive_plot = False
+
+
         # title of the plot
         self.title_text = title_text
         self.fontsize_title = fontsize_title
