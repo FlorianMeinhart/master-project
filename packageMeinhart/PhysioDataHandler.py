@@ -1866,33 +1866,36 @@ class PhysioData_WindowingProcedure():
         
         # going through all exercises
         for ex in self.exercise_abbrs_peak_eval:
-            print('\nExercise: ' + ex)
-            print('Number of blocks: {}\n'.format(len(self.rep_blocks[ex])))
 
-            # going through all repetition blocks of the current exercise
-            for block_num in range(len(self.rep_blocks[ex])):
-                print('\tBlock #{}:'.format(block_num+1))
-                print('\t\tRepetitions: {}'.format(np.shape(np.array(self.rep_blocks[ex][block_num]))[0]))
-                
-                # for both indices we have to consider the start position of the first window (win_start)
-                start_index = self.rep_blocks[ex][block_num][0,0] + \
-                    convert_time_format(self.win_start_min_sec, sampling_rate=1/self.win_start_inc)
-                stop_index = self.rep_blocks[ex][block_num][-1,0] + \
-                    convert_time_format(self.win_start_min_sec, sampling_rate=1/self.win_start_inc)
-                
-                # for the stop index we have to consider the length of the last repetition
-                stop_index += int((self.rep_blocks[ex][block_num][-1,1]*self.win_stretch_inc \
-                                   + self.win_min_len) / self.win_start_inc)
-                
-                print('\t\tTime range: ' + indices_to_time(start_index, stop_index, self.win_start_inc))
-                
-                if print_rep_len_prob is True:
-                    print('\t\tRepetition lengths [s] and predicted prob.: ')
-                    for kk, rep_length_index in enumerate(self.rep_blocks[ex][block_num][:,1]):
-                        win_pos_index = self.rep_blocks[ex][block_num][kk,0]
-                        print('\t\t\t{0:3d}\t{1:.2f}\t({2:.3f})'.format(kk+1,
-                                                  rep_length_index*self.win_stretch_inc + self.win_min_len,
-                                                  self.prob_matrix_dict[ex][win_pos_index,rep_length_index])) 
+            # plot exercise only if blocks are found
+            if len(self.rep_blocks[ex]) > 0:
+                print('\nExercise: ' + ex)
+                print('Number of blocks: {}\n'.format(len(self.rep_blocks[ex])))
+
+                # going through all repetition blocks of the current exercise
+                for block_num in range(len(self.rep_blocks[ex])):
+                    print('\tBlock #{}:'.format(block_num+1))
+                    print('\t\tRepetitions: {}'.format(np.shape(np.array(self.rep_blocks[ex][block_num]))[0]))
+
+                    # for both indices we have to consider the start position of the first window (win_start)
+                    start_index = self.rep_blocks[ex][block_num][0,0] + \
+                        convert_time_format(self.win_start_min_sec, sampling_rate=1/self.win_start_inc)
+                    stop_index = self.rep_blocks[ex][block_num][-1,0] + \
+                        convert_time_format(self.win_start_min_sec, sampling_rate=1/self.win_start_inc)
+
+                    # for the stop index we have to consider the length of the last repetition
+                    stop_index += int((self.rep_blocks[ex][block_num][-1,1]*self.win_stretch_inc \
+                                       + self.win_min_len) / self.win_start_inc)
+
+                    print('\t\tTime range: ' + indices_to_time(start_index, stop_index, self.win_start_inc))
+
+                    if print_rep_len_prob is True:
+                        print('\t\tRepetition lengths [s] and predicted prob.: ')
+                        for kk, rep_length_index in enumerate(self.rep_blocks[ex][block_num][:,1]):
+                            win_pos_index = self.rep_blocks[ex][block_num][kk,0]
+                            print('\t\t\t{0:3d}\t{1:.2f}\t({2:.3f})'.format(kk+1,
+                                                      rep_length_index*self.win_stretch_inc + self.win_min_len,
+                                                      self.prob_matrix_dict[ex][win_pos_index,rep_length_index]))
     
     
     def evaluate_probability_matrix(self,
@@ -1964,20 +1967,26 @@ class PhysioData_WindowingProcedure():
                                             title_text='Predicted Probabilites',
                                             figsize=(18,9),
                                             cross_size=10,
+                                            cross_width=1.5,
                                             fontsize_title=20,
                                             yticks_step_in_s=2,
                                             fontsize_yticks=7,
                                             fontsize_ylabels_ex=13,
                                             labelpad_ex=32,
+                                            fontsize_actual_classes=10,
                                             fontsize_actual_classes_label=11,
                                             labelpad_actual_classes=50,
                                             fontsize_window_length=10,
                                             xpos_window_length=0.1,
                                             ypos_window_length=0.6,
                                             fontsize_time_xlabel=13,
+                                            fontsize_time_xticks=11,
                                             colorbar_position_x_y_length_heigth=[0.93, 0.255, 0.01, 0.625],
                                             fontsize_colorbar_ticks=10,
                                             interactive_plot=True,
+                                            plot_time_range=False,
+                                            start_time='00:00.0',
+                                            stop_time='01:00.0',
                                             plot_actual_classes=True,
                                             timetable_file_dir = r'E:\Physio_Data\Exercise_time_tables',
                                             timetable_file_name = 'Timetable_subject01.txt',
@@ -2029,6 +2038,7 @@ class PhysioData_WindowingProcedure():
         
         # title of the plot
         self.title_text = title_text
+        self.fontsize_title = fontsize_title
 
         yticks = np.arange(0, self.win_max_len-self.win_min_len+self.win_stretch_inc, yticks_step_in_s) / self.win_stretch_inc
         ylabels = ['{}'.format(yticks[ii] * self.win_stretch_inc + self.win_min_len) for ii in range(len(yticks))]
@@ -2063,7 +2073,8 @@ class PhysioData_WindowingProcedure():
             for ii in range(len(self.rep_blocks[ex])):
                 x_peak = np.array(self.rep_blocks[ex][ii])[:,0]
                 y_peak = np.array(self.rep_blocks[ex][ii])[:,1]
-                self.cross_plot[ex].append(ax.plot(x_peak, y_peak, '+g', markersize=cross_size, markeredgewidth=1.5))
+                self.cross_plot[ex].append(ax.plot(x_peak, y_peak, '+g',
+                                                   markersize=cross_size, markeredgewidth=cross_width))
 
         if interactive_plot is True:
             self.Button_showCross_ax = plt.axes([0.78, 0.12, 0.05, 0.03])
@@ -2075,6 +2086,7 @@ class PhysioData_WindowingProcedure():
         # time axis
         formatter = FuncFormatter(lambda i, x: time.strftime('%M:%S', time.gmtime(i*self.win_start_inc+self.win_start)))
         self.axis[-1].xaxis.set_major_formatter(formatter)
+        self.axis[-1].xaxis.set_tick_params(labelsize=fontsize_time_xticks)
         self.axis[-1].set_xlabel(r'time $[min:sec]$', fontsize=fontsize_time_xlabel)
 
         if interactive_plot is True:
@@ -2107,14 +2119,21 @@ class PhysioData_WindowingProcedure():
             self.Button_resetX.on_clicked(self.resetX)
 
         self.start_index = 0
-        self.stop_index = self.num_start_points
+        self.stop_index = self.num_start_points - 1 # -1 because of image plot --> pixel in the center
+
+        # if just a certain time range should be plotted
+        if plot_time_range is True:
+            self.start_index = convert_time_format(start_time, sampling_rate=1/self.win_start_inc) \
+                                - self.win_start/self.win_start_inc
+            self.stop_index  = convert_time_format(stop_time, sampling_rate=1 / self.win_start_inc) \
+                                - self.win_start / self.win_start_inc
 
         self.fig.suptitle(self.title_text + '\n' + indices_to_time(
                 self.start_index + round(self.win_start/self.win_start_inc),  
                 self.stop_index + round(self.win_start/self.win_start_inc), 
                 self.win_start_inc), fontsize=fontsize_title)
 
-        self.axis[-1].set_xlim(0, self.num_start_points)
+        self.axis[-1].set_xlim(self.start_index, self.stop_index)
 
 
         # Plotting the actual classes (exercises) on the last axis:
@@ -2151,9 +2170,10 @@ class PhysioData_WindowingProcedure():
                     # x center of marked area
                     x_center = left_border + (right_border-left_border)/2
                     self.axis[-1].text(x_center, 0.5, str(rep_num) + '\n' + exercise_timetable_names[ex_name], 
-                                  horizontalalignment='center', verticalalignment='center', fontsize=10, clip_on=True)
+                                  horizontalalignment='center', verticalalignment='center',
+                                  fontsize=fontsize_actual_classes, clip_on=True)
 
-            self.axis[-1].set_ylabel('Actual classes', rotation=0, fontsize=fontsize_actual_classes_label)
+            self.axis[-1].set_ylabel('Actual Ex.', rotation=0, fontsize=fontsize_actual_classes_label)
             self.axis[-1].yaxis.labelpad = labelpad_actual_classes
 
         plt.show()
@@ -2168,7 +2188,7 @@ class PhysioData_WindowingProcedure():
         self.fig.suptitle(self.title_text + '\n' + indices_to_time(
             self.start_index + round(self.win_start/self.win_start_inc),  
             self.stop_index + round(self.win_start/self.win_start_inc), 
-            self.win_start_inc), fontsize=fontsize_title)
+            self.win_start_inc), fontsize=self.fontsize_title)
         plt.draw()
         
     def toggle_cross(self,val):
@@ -2187,7 +2207,7 @@ class PhysioData_WindowingProcedure():
         self.fig.suptitle(self.title_text + '\n' + indices_to_time(
             self.start_index + round(self.win_start/self.win_start_inc),  
             self.stop_index + round(self.win_start/self.win_start_inc), 
-            self.win_start_inc), fontsize=fontsize_title)
+            self.win_start_inc), fontsize=self.fontsize_title)
         plt.draw()
 
 
