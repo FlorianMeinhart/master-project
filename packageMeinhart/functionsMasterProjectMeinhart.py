@@ -10,6 +10,77 @@ import os
 import re
 
 
+def get_timetable_ex_dict(timetable_file_dir=r'E:\Physio_Data\Exercise_time_tables',
+                          timetable_file_name='Timetable_subject01.txt',
+                          exercise_timetable_names={'Raises Front':'RF',
+                                                    'Raises Oblique':'RO',
+                                                    'Raises Side':'RS',
+                                                    'Rotation Wrist':'LR',
+                                                    'Biceps Curls':'BC',
+                                                    'Triceps Curls':'TC',
+                                                    'Military Press':'MP',
+                                                    'Shoulder Adduct.':'SA',
+                                                    'PNF Diagonal 1':'P1',
+                                                    'PNF Diagonal 2':'P2'}
+                          ):
+    
+    '''
+    Function to get the start and stop times of individual exercise repetition blocks
+    according to a timetable (txt-file) of specific format.
+    
+    Parameters
+    ----------
+    timetable_file_dir : string
+        Directory to time-table file.
+    
+    timetable_file_name : string
+        Time-table file name.
+    
+    exercise_timetable_names : 
+        Dictionary with exercise names according to the timetable as keys,
+        and exercise abbreviations as values. (e.g. {'Raises Front':'RF'})
+    
+    
+    Returns
+    -------
+    dict
+        Dictionary with start and stop times in format 'min:sec'
+        for each exercise repetition block.
+        --> Keys are strings describing the block and start or stop time.
+        
+        Example:
+        timetable_ex_dict['RF_10_start_time'] = '13:44.8'
+        timetable_ex_dict['RF_10_stop_time'] = '14:14'
+    '''
+
+    # file with timetable (csv) of the test subject
+    timetable_data_path = os.path.join(timetable_file_dir, timetable_file_name)
+
+    # read in time table
+    timetable_data = pd.read_csv(timetable_data_path, skiprows=0, sep='\t', header=None)
+    num_exercises = timetable_data.shape[0] # number of exercises
+
+    timetable_ex_dict = {}
+
+    # going through all exercises in the timetable
+    for ii, ex_name in enumerate(timetable_data.values[:,0]):
+
+        # going through all repetition blocks in the timetable (5, 10 and 15 rep. blocks)
+        for rep_col, start_col, stop_col in zip([1,2,3],[4,6,8],[5,7,9]): # corresponding columns
+
+            rep_num = timetable_data.values[ii,rep_col]
+
+            start_time = timetable_data.values[ii,start_col]
+
+            stop_time = timetable_data.values[ii,stop_col]
+
+            # write stop and start time to dict
+            timetable_ex_dict['{}_{}_start_time'.format(exercise_timetable_names[ex_name], rep_num)] = start_time
+            timetable_ex_dict['{}_{}_stop_time'.format(exercise_timetable_names[ex_name], rep_num)] = stop_time
+    
+    return timetable_ex_dict
+
+
 def convert_time_format_to_index(min_sec, sampling_rate, time_offset=0, max_index=None):
     '''
     Function converts a string with the time format 'min:sec' (e.g. 5:17.2)

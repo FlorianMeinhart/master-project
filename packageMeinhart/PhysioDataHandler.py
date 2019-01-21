@@ -1930,7 +1930,7 @@ class PhysioData_WindowingProcedure():
             Length of the footprint for the maximum_filter in order to find peaks [s].
         
         print_rep_len_prob : boolean
-            If Ture --> print individual repetition lengths and predicted probabilities.
+            If True --> print individual repetition lengths and predicted probabilities.
 
 
         Returns
