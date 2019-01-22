@@ -2044,8 +2044,8 @@ class PhysioData_WindowingProcedure():
         # default settings for a smaller plot
         if default_settings_smaller_plot is True:
             figsize = (10, 10)
-            cross_size = 15
-            cross_width = 3
+            cross_size = 12
+            cross_width = 4
             fontsize_title = 18
             yticks_step_in_s = 2
             fontsize_yticks = 10
@@ -2104,7 +2104,7 @@ class PhysioData_WindowingProcedure():
             for ii in range(len(self.rep_blocks[ex])):
                 x_peak = np.array(self.rep_blocks[ex][ii])[:,0]
                 y_peak = np.array(self.rep_blocks[ex][ii])[:,1]
-                self.cross_plot[ex].append(ax.plot(x_peak, y_peak, '+m',
+                self.cross_plot[ex].append(ax.plot(x_peak, y_peak, '+g',
                                                    markersize=cross_size, markeredgewidth=cross_width))
 
         if interactive_plot is True:
