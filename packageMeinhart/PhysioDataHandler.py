@@ -1964,7 +1964,7 @@ class PhysioData_WindowingProcedure():
         
         
     def plot_probability_matrices_and_peaks(self,
-                                            title_text='Predicted Probabilites',
+                                            title_text='Probability Matrices',
                                             default_settings_smaller_plot=False,
                                             figsize=(18,9),
                                             cross_size=10,
