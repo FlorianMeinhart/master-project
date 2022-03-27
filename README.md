@@ -1,4 +1,4 @@
-# Master Project - Florian Meinhart (private repo)
+# Master Project - Florian Meinhart
 
 ## Medical Engineering - University of Applied Sciences Upper Austria
 
